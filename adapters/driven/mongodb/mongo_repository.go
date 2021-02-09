@@ -4,9 +4,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/psghahremani/url-shortener/adapters/driven/mongodb/models"
 	domainModels "github.com/psghahremani/url-shortener/domain/models"
 	"github.com/psghahremani/url-shortener/domain/ports"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -51,10 +53,41 @@ func NewMongoRepository(mongoConnectionUrl, database string, timeout time.Durati
 
 /* The following methods are the implementation of UrlRepository specified in domain ports. */
 
-func (mongoRepository *mongoRepository) StoreUrl(context.Context, domainModels.ShortenedUrl) error {
-	return nil
+// TODO: Automatically remove expired documents.
+func (mongoRepository *mongoRepository) StoreUrl(ctx context.Context, shortenedUrl domainModels.ShortenedUrl) error {
+	// Convert domain model to repository model.
+	shortenedUrlDto := models.ShortenedUrl{
+		Handle:      shortenedUrl.Handle,
+		OriginalUrl: shortenedUrl.OriginalUrl,
+		CreatedAt:   shortenedUrl.CreatedAt,
+		ExpiresAt:   shortenedUrl.ExpiresAt,
+	}
+
+	// Insert the new shortened URL into the database.
+	_, err := mongoRepository.database.Collection("urls").InsertOne(ctx, shortenedUrlDto)
+
+	return err
 }
 
-func (mongoRepository *mongoRepository) GetUrlByHandle(context.Context, string) (*domainModels.ShortenedUrl, error) {
-	return nil, nil
+func (mongoRepository *mongoRepository) GetUrlByHandle(ctx context.Context, handle string) (*domainModels.ShortenedUrl, error) {
+	// Prepare a query document.
+	query := bson.D{
+		{"handle", handle},
+	}
+
+	// Execute query and fetch the result.
+	var result models.ShortenedUrl
+	err := mongoRepository.database.Collection("urls").FindOne(ctx, query).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert result to domain model.
+	shortenedUrlDto := domainModels.ShortenedUrl{
+		Handle:      result.Handle,
+		OriginalUrl: result.OriginalUrl,
+		CreatedAt:   result.CreatedAt,
+		ExpiresAt:   result.ExpiresAt,
+	}
+	return &shortenedUrlDto, nil
 }
