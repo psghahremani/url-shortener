@@ -1,0 +1,5 @@
+# Ignore JetBrains configurations.
+.idea
+
+# Ignore VSCode configurations.
+.vscode
