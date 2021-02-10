@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -28,11 +29,17 @@ func getEnvOrDefault(key string, defaultValue string) string {
 
 func init() {
 	Config.MongoDbConfig = MongoDbConfig{
-		Host:         "172.17.0.1",
-		Port:         "27017",
-		Timeout:      30 * time.Second,
-		DatabaseName: "url_shortener",
+		Host:         getEnvOrDefault("MONGO_HOST", "172.17.0.2"),
+		Port:         getEnvOrDefault("MONGO_PORT", "27017"),
+		DatabaseName: getEnvOrDefault("MONGO_DATABASE_NAME", "url_shortener"),
 	}
+
+	mongoTimeout := getEnvOrDefault("MONGO_TIMEOUT", "30")
+	mongoTimeoutInteger, err := strconv.Atoi(mongoTimeout)
+	if err != nil {
+		mongoTimeoutInteger = 30
+	}
+	Config.MongoDbConfig.Timeout = time.Duration(mongoTimeoutInteger) * time.Second
 	Config.MongoDbConfig.ConnectionUrl = fmt.Sprintf(
 		"mongodb://%s:%s",
 		Config.MongoDbConfig.Host,

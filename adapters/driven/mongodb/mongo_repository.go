@@ -59,6 +59,20 @@ func NewMongoRepository(mongoConnectionUrl, databaseName string, timeout time.Du
 		return nil, err
 	}
 
+	// Create a unique index on "original_url".
+	unique := true
+	_, err = client.Database(databaseName).Collection("urls").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.M{
+			"original_url": 1,
+		},
+		Options: &options.IndexOptions{
+			Unique: &unique,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// Create and return repository.
 	repository := &mongoRepository{
 		client:       client,
