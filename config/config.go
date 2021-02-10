@@ -9,6 +9,7 @@ import (
 
 var Config = struct {
 	MongoDbConfig MongoDbConfig
+	HttpServer    HttpServer
 }{}
 
 type MongoDbConfig struct {
@@ -17,6 +18,10 @@ type MongoDbConfig struct {
 	DatabaseName  string
 	Timeout       time.Duration
 	ConnectionUrl string
+}
+
+type HttpServer struct {
+	Port string
 }
 
 func getEnvOrDefault(key string, defaultValue string) string {
@@ -45,4 +50,6 @@ func init() {
 		Config.MongoDbConfig.Host,
 		Config.MongoDbConfig.Port,
 	)
+
+	Config.HttpServer.Port = getEnvOrDefault("URL_SHORTENER_PORT", "9000")
 }
