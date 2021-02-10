@@ -15,7 +15,8 @@ import (
 )
 
 type mongoRepository struct {
-	database *mongo.Database
+	client       *mongo.Client
+	databaseName string
 }
 
 func newMongoClient(mongoConnectionUrl string, timeout time.Duration) (*mongo.Client, error) {
@@ -37,7 +38,7 @@ func newMongoClient(mongoConnectionUrl string, timeout time.Duration) (*mongo.Cl
 	return client, nil
 }
 
-func NewMongoRepository(mongoConnectionUrl, database string, timeout time.Duration) (ports.UrlRepository, error) {
+func NewMongoRepository(mongoConnectionUrl, databaseName string, timeout time.Duration) (ports.UrlRepository, error) {
 	// Create a MongoDB client using the given URL.
 	client, err := newMongoClient(mongoConnectionUrl, timeout)
 	if err != nil {
@@ -46,7 +47,8 @@ func NewMongoRepository(mongoConnectionUrl, database string, timeout time.Durati
 
 	// Create and return repository.
 	repository := &mongoRepository{
-		database: client.Database(database),
+		client:       client,
+		databaseName: databaseName,
 	}
 	return repository, nil
 }
@@ -64,7 +66,7 @@ func (mongoRepository *mongoRepository) StoreUrl(ctx context.Context, shortenedU
 	}
 
 	// Insert the new shortened URL into the database.
-	_, err := mongoRepository.database.Collection("urls").InsertOne(ctx, shortenedUrlDto)
+	_, err := mongoRepository.client.Database(mongoRepository.databaseName).Collection("urls").InsertOne(ctx, shortenedUrlDto)
 
 	return err
 }
@@ -77,7 +79,7 @@ func (mongoRepository *mongoRepository) GetUrlByHandle(ctx context.Context, hand
 
 	// Execute query and fetch the result.
 	var result models.ShortenedUrl
-	err := mongoRepository.database.Collection("urls").FindOne(ctx, query).Decode(&result)
+	err := mongoRepository.client.Database(mongoRepository.databaseName).Collection("urls").FindOne(ctx, query).Decode(&result)
 	if err != nil {
 		return nil, err
 	}
