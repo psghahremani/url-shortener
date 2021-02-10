@@ -11,6 +11,7 @@ import (
 )
 
 func main() {
+	// Create a URL repository using configurations.
 	urlRepository, err := mongodb.NewMongoRepository(
 		config.Config.MongoDbConfig.ConnectionUrl,
 		config.Config.MongoDbConfig.DatabaseName,
@@ -20,9 +21,13 @@ func main() {
 		log.Fatalf("cannot initialie URL repository: %s", err.Error())
 	}
 
+	// Create a URL shortener service, pass repository as a dependency.
 	urlShortenerService := domain.NewUrlShortenerService(urlRepository)
 
+	// Create an Echo HTTP server, passing domain services as its dependency.
 	e := http.NewEchoServer(urlShortenerService)
+
+	// Start HTTP server.
 	err = e.Start(fmt.Sprintf(":%s", config.Config.HttpServer.Port))
 	if err != nil {
 		log.Fatalf("cannot start HTTP server: %s", err.Error())
