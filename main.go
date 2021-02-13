@@ -3,11 +3,16 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 
 	"github.com/psghahremani/url-shortener/adapters/driven/mongodb"
-	"github.com/psghahremani/url-shortener/adapters/driving/http"
+	grpcAdapter "github.com/psghahremani/url-shortener/adapters/driving/grpc"
+	"github.com/psghahremani/url-shortener/adapters/driving/grpc/models"
 	"github.com/psghahremani/url-shortener/config"
 	"github.com/psghahremani/url-shortener/domain"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -24,12 +29,21 @@ func main() {
 	// Create a URL shortener service, pass repository as a dependency.
 	urlShortenerService := domain.NewUrlShortenerService(urlRepository)
 
-	// Create an Echo HTTP server, passing domain services as its dependency.
-	e := http.NewEchoServer(urlShortenerService)
+	fmt.Println("yea")
 
-	// Start HTTP server.
-	err = e.Start(fmt.Sprintf(":%s", config.Config.HttpServer.Port))
+	// Start gRPC server.
+	urlShortenerGrpcServer := grpcAdapter.NewUrlShortenerGrpcServer(urlShortenerService)
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", config.Config.GrpcServer.Port))
 	if err != nil {
-		log.Fatalf("cannot start HTTP server: %s", err.Error())
+		log.Fatalf("cannot initialie a URL shortener gRPC server: %s", err.Error())
+	}
+
+	server := grpc.NewServer()
+	models.RegisterUrlShortenerServiceServer(server, urlShortenerGrpcServer)
+	reflection.Register(server)
+
+	err = server.Serve(listener)
+	if err != nil {
+		log.Fatalf("cannot start gRPC server: %s", err.Error())
 	}
 }

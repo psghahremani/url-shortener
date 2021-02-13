@@ -10,6 +10,7 @@ import (
 var Config = struct {
 	MongoDbConfig MongoDbConfig
 	HttpServer    HttpServer
+	GrpcServer    GrpcServer
 }{}
 
 type MongoDbConfig struct {
@@ -21,6 +22,10 @@ type MongoDbConfig struct {
 }
 
 type HttpServer struct {
+	Port string
+}
+
+type GrpcServer struct {
 	Port string
 }
 
@@ -52,4 +57,5 @@ func init() {
 	)
 
 	Config.HttpServer.Port = getEnvOrDefault("URL_SHORTENER_PORT", "9000")
+	Config.GrpcServer.Port = getEnvOrDefault("URL_SHORTENER_PORT_GRPC", "9000")
 }

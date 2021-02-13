@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package proto;
+option go_package = "github.com/psghahremani/url-shortener;models";
+
+message ShortenedUrl {
+  string handle = 1;
+  string original_url = 2;
+  int64 created_at = 3;
+  int64 expires_at = 4;
+}
+
+message ShortenUrlRequest {
+  string url = 1;
+  int64 expires_at = 2;
+}
+
+message LookupUrlRequest {
+  string handle = 1;
+}
+
+service UrlShortenerService {
+  rpc ShortenUrl(ShortenUrlRequest) returns (ShortenedUrl);
+  rpc LookupUrl(LookupUrlRequest) returns (ShortenedUrl);
+}
